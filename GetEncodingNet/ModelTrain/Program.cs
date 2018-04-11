@@ -51,9 +51,31 @@ namespace ModelTrain
                 Console.WriteLine("for codepage {0} defined codepage is {1} (p={2:f3})", encoding.CodePage, codePage, marks[codePage]);
             }
 
+            Console.WriteLine();
 
+            Console.WriteLine("model 1 script will be saved to <script1.zzz>");
+            File.WriteAllLines("script1.zzz", SrciptToCs.Process(models[0].ToScript(), "model_1"));
+            Console.WriteLine("model 2 script will be saved to <script2.zzz>");
+            File.WriteAllLines("script2.zzz", SrciptToCs.Process(models[1].ToScript(), "model_2"));
+
+            Console.WriteLine();
+
+            foreach (var encoding in encodings)
+            {
+                var bytes = encoding.GetBytes(example);
+                int codePage;
+                double prob;
+                ResultClass.model_1(bytes, out codePage, out prob);
+                Console.WriteLine("model_1: for codepage {0} defined codepage is {1} (p={2:f3})", encoding.CodePage, codePage, prob);
+                ResultClass.model_2(bytes, out codePage, out prob);
+                Console.WriteLine("model_2: for codepage {0} defined codepage is {1} (p={2:f3})", encoding.CodePage, codePage, prob);
+            }
+
+            Console.WriteLine();
             Console.WriteLine("press enter...");
             Console.ReadLine();
+
+
         }
 
         //private static void ReadModels(List<BayesModel> models, string modelFileName)

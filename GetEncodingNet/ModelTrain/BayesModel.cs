@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 
 namespace ModelTrain
@@ -135,6 +136,70 @@ namespace ModelTrain
                 ret = pair.Key;
             }
             return ret ?? -1;
+        }
+
+        public List<ScriptCommand> ToScript()
+        {
+            var ret = new List<ScriptCommand>();
+
+            Func<double, double> pp = x => Math.Log(x/(1.0 - x));
+
+            ret.Add(new ScriptCommand("start"));
+            ret.Add(new ScriptCommand("set_ngram", CodeSize));
+            // init of rates table
+            ret.Add(new ScriptCommand("reset_rates"));
+            foreach (var pair in P0) ret.Add(new ScriptCommand("init_rate", pair.Key, pp(pair.Value)));
+
+            // main procedure
+            ret.Add(new ScriptCommand("begin_loop","lp000"));
+            ret.Add(new ScriptCommand("get_ngram"));
+            ret.Add(new ScriptCommand("if_break", "==", -1));
+            // comparing ngram
+            ret.Add(new ScriptCommand("begin_switch", "ngram"));
+            foreach (var pair in Codes)
+            {
+                ret.Add(new ScriptCommand("begin_case", pair.Key));
+                foreach (var info in pair.Value) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
+                ret.Add(new ScriptCommand("end_case", pair.Key));
+            }
+            ret.Add(new ScriptCommand("end_switch", "ngram"));
+
+            //var cds = Codes.Keys.ToArray();
+            //Array.Sort(cds);
+
+            //Action<int, int> rec = null;
+
+            //rec = (l, r) =>
+            //{
+            //    if ((r - l + 1) > 4)
+            //    {
+            //        int m = (l + r) >> 1;
+            //        ret.Add(new ScriptCommand("if_begin", "<", cds[m]));
+            //        rec(l, m - 1);
+            //        ret.Add(new ScriptCommand("if_else"));
+            //        rec(m, r);
+            //        ret.Add(new ScriptCommand("if_end"));
+            //    }
+            //    else
+            //    {
+            //        for (int i = l; i <= r; i++)
+            //        {
+            //            var code = cds[i];
+            //            var dic = Codes[code];
+            //            ret.Add(new ScriptCommand("if_begin", "==", code));
+            //            foreach (var info in dic) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
+            //            ret.Add(new ScriptCommand("if_end"));
+            //        }
+            //    }
+            //};
+
+            //rec(0, cds.Length - 1);
+
+            ret.Add(new ScriptCommand("end_loop","lp000"));
+            ret.Add(new ScriptCommand("convert_rates"));
+            ret.Add(new ScriptCommand("find_best_rate"));
+            ret.Add(new ScriptCommand("finish"));
+            return ret;
         }
     }
 }
