@@ -41,6 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BayesModel.cs" />
+    <Compile Include="BayesModels.cs" />
+    <Compile Include="CodeModel.cs" />
     <Compile Include="NGramHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
