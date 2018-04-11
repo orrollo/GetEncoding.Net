@@ -156,11 +156,11 @@ namespace ModelTrain
             var modelFileName = "model.dat";
 
             if (!File.Exists(modelFileName))
-                BuildModels(models, modelFileName, encodings, 0.75);
+                BuildModels(models, modelFileName, encodings, 0.9);
             else
                 ReadModels(models, modelFileName);
 
-            var example = "Три кота, три хвоста";
+            var example = "Трико";
 
             foreach (var bayesModel in models)
             {
@@ -201,28 +201,34 @@ namespace ModelTrain
                 foreach (var file in files)
                 {
                     Console.WriteLine("processing file {0}...", file);
-                    var text = File.ReadAllText(file, Encoding.GetEncoding(1251));
+                    var srcText = File.ReadAllText(file, Encoding.GetEncoding(1251));
 
-                    foreach (var encoding in encodings)
+                    Action<string> processText = text =>
                     {
-                        var ms = new MemoryStream(encoding.GetBytes(text));
-
-                        var currentEncoding = encoding;
-                        Action<int, int> ngProc = (size, value) =>
+                        foreach (var encoding in encodings)
                         {
-                            if (!model.ContainsKey(size)) model[size] = new Dictionary<int, Dictionary<Encoding, int>>();
-                            if (!model[size].ContainsKey(value)) model[size][value] = new Dictionary<Encoding, int>();
-                            if (!model[size][value].ContainsKey(currentEncoding)) model[size][value][currentEncoding] = 0;
-                            model[size][value][currentEncoding]++;
-                            //
-                            if (!stats.ContainsKey(size)) stats[size] = new Dictionary<Encoding, int>();
-                            if (!stats[size].ContainsKey(currentEncoding)) stats[size][currentEncoding] = 0;
-                            stats[size][currentEncoding]++;
-                        };
+                            var ms = new MemoryStream(encoding.GetBytes(text));
 
-                        NGramHelper.ForEachNGram(ms, 1, ngProc);
-                        NGramHelper.ForEachNGram(ms, 2, ngProc);
-                    }
+                            var currentEncoding = encoding;
+                            Action<int, int> ngProc = (size, value) =>
+                            {
+                                if (!model.ContainsKey(size)) model[size] = new Dictionary<int, Dictionary<Encoding, int>>();
+                                if (!model[size].ContainsKey(value)) model[size][value] = new Dictionary<Encoding, int>();
+                                if (!model[size][value].ContainsKey(currentEncoding)) model[size][value][currentEncoding] = 0;
+                                model[size][value][currentEncoding]++;
+                                //
+                                if (!stats.ContainsKey(size)) stats[size] = new Dictionary<Encoding, int>();
+                                if (!stats[size].ContainsKey(currentEncoding)) stats[size][currentEncoding] = 0;
+                                stats[size][currentEncoding]++;
+                            };
+
+                            NGramHelper.ForEachNGram(ms, 1, ngProc);
+                            NGramHelper.ForEachNGram(ms, 2, ngProc);
+                        }
+                    };
+
+                    processText(srcText.ToLower());
+                    processText(srcText.ToUpper());
                 }
             }
             catch (Exception ex)
