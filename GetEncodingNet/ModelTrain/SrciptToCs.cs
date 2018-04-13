@@ -157,13 +157,13 @@ namespace ModelTrain
                         ret.Line("foreach (var key in keys)");
                         ret.Line("{");
                         _level++;
-                        ret.Line("var x = Math.Exp(Math.Min(100.0, rates[key]));");
+                        ret.Line("var x = Math.Exp(Math.Max(-50, Math.Min(100.0, rates[key])));");
                         ret.Line("var p = x / (1.0 + x);");
                         ret.Line("pSum += p;");
                         ret.Line("rates[key] = p;");
                         _level--;
                         ret.Line("}");
-                        ret.Line("foreach (var key in keys) rates[key] /= pSum;");
+                        //ret.Line("foreach (var key in keys) rates[key] /= pSum;");
                     }
                     else
                     {

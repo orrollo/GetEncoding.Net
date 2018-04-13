@@ -138,7 +138,7 @@ namespace ModelTrain
             return ret ?? -1;
         }
 
-        public List<ScriptCommand> ToScript()
+        public List<ScriptCommand> ToScript(bool useTree = false)
         {
             var ret = new List<ScriptCommand>();
 
@@ -155,45 +155,50 @@ namespace ModelTrain
             ret.Add(new ScriptCommand("get_ngram"));
             ret.Add(new ScriptCommand("if_break", "==", -1));
             // comparing ngram
-            ret.Add(new ScriptCommand("begin_switch", "ngram"));
-            foreach (var pair in Codes)
+
+            if (!useTree)
             {
-                ret.Add(new ScriptCommand("begin_case", pair.Key));
-                foreach (var info in pair.Value) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
-                ret.Add(new ScriptCommand("end_case", pair.Key));
+                ret.Add(new ScriptCommand("begin_switch", "ngram"));
+                foreach (var pair in Codes)
+                {
+                    ret.Add(new ScriptCommand("begin_case", pair.Key));
+                    foreach (var info in pair.Value) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
+                    ret.Add(new ScriptCommand("end_case", pair.Key));
+                }
+                ret.Add(new ScriptCommand("end_switch", "ngram"));
             }
-            ret.Add(new ScriptCommand("end_switch", "ngram"));
+            else
+            {
+                var cds = Codes.Keys.ToArray();
+                Array.Sort(cds);
 
-            //var cds = Codes.Keys.ToArray();
-            //Array.Sort(cds);
+                Action<int, int> rec = null;
 
-            //Action<int, int> rec = null;
-
-            //rec = (l, r) =>
-            //{
-            //    if ((r - l + 1) > 4)
-            //    {
-            //        int m = (l + r) >> 1;
-            //        ret.Add(new ScriptCommand("if_begin", "<", cds[m]));
-            //        rec(l, m - 1);
-            //        ret.Add(new ScriptCommand("if_else"));
-            //        rec(m, r);
-            //        ret.Add(new ScriptCommand("if_end"));
-            //    }
-            //    else
-            //    {
-            //        for (int i = l; i <= r; i++)
-            //        {
-            //            var code = cds[i];
-            //            var dic = Codes[code];
-            //            ret.Add(new ScriptCommand("if_begin", "==", code));
-            //            foreach (var info in dic) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
-            //            ret.Add(new ScriptCommand("if_end"));
-            //        }
-            //    }
-            //};
-
-            //rec(0, cds.Length - 1);
+                rec = (l, r) =>
+                {
+                    if ((r - l + 1) > 4)
+                    {
+                        int m = (l + r) >> 1;
+                        ret.Add(new ScriptCommand("if_begin", "<", cds[m]));
+                        rec(l, m - 1);
+                        ret.Add(new ScriptCommand("if_else"));
+                        rec(m, r);
+                        ret.Add(new ScriptCommand("if_end"));
+                    }
+                    else
+                    {
+                        for (int i = l; i <= r; i++)
+                        {
+                            var code = cds[i];
+                            var dic = Codes[code];
+                            ret.Add(new ScriptCommand("if_begin", "==", code));
+                            foreach (var info in dic) ret.Add(new ScriptCommand("inc_rate", info.Key, pp(info.Value)));
+                            ret.Add(new ScriptCommand("if_end"));
+                        }
+                    }
+                };
+                rec(0, cds.Length - 1);                
+            }
 
             ret.Add(new ScriptCommand("end_loop","lp000"));
             ret.Add(new ScriptCommand("convert_rates"));

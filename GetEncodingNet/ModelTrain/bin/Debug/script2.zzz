@@ -6464,12 +6464,11 @@ public static void model_2(byte[] bytes, out int codePage, out double prob) {
   var pSum = 0.0;
   foreach (var key in keys)
   {
-    var x = Math.Exp(Math.Min(100.0, rates[key]));
+    var x = Math.Exp(Math.Max(-50, Math.Min(100.0, rates[key])));
     var p = x / (1.0 + x);
     pSum += p;
     rates[key] = p;
   }
-  foreach (var key in keys) rates[key] /= pSum;
   codePage = -1;
   prob=0.0;
   foreach (var pair in rates)
