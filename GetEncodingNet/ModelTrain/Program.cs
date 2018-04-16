@@ -33,7 +33,7 @@ namespace ModelTrain
 
             foreach (var bayesModel in models)
             {
-                Console.WriteLine("mode code size: {0} byte(s)", bayesModel.CodeSize);
+                Console.WriteLine("model code size: {0} byte(s)", bayesModel.CodeSize);
                 foreach (var encoding in encodings)
                 {
                     var bytes = encoding.GetBytes(example);
@@ -87,6 +87,12 @@ namespace ModelTrain
             ResultClass.model_1(src, out zcodePage, out zprob);
             sw.Stop();
             Console.WriteLine("model_1: defined codepage is {0} (p={1:f3}); time = {2}ms", zcodePage, zprob, sw.ElapsedMilliseconds);
+
+            sw.Restart();
+            var xmarks = models[0].GetMarks(src);
+            var xbest = models[0].GetBestMark(xmarks);
+            sw.Stop();
+            Console.WriteLine("model_0: defined codepage is {0} (p={1:f3}); time = {2}ms", xbest, xmarks[xbest], sw.ElapsedMilliseconds);
 
             sw.Restart();
             ResultClass.model_2(src, out zcodePage, out zprob);

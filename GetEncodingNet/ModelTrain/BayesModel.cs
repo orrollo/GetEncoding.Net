@@ -109,6 +109,22 @@ namespace ModelTrain
             });
 
             var keys = ret.Keys.ToArray();
+
+            double? minValue = null, maxValue = null;
+
+            foreach (var key in keys)
+            {
+                var x = ret[key];
+                if (minValue == null || minValue.Value > x) minValue = x;
+                if (maxValue == null || maxValue.Value < x) maxValue = x;
+            }
+
+            if (maxValue.Value - minValue.Value >= 100)
+            {
+                var scale = 10.0/(maxValue.Value - minValue.Value);
+                foreach (var key in keys) ret[key] = (ret[key] - minValue.Value)*scale - 5;
+            }
+
             var pSum = 0.0;
             foreach (var key in keys)
             {
